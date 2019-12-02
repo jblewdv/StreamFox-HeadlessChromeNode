@@ -15,6 +15,11 @@ app.get('/', function(req, res) {
 /* APP - GET route */
 app.get('/validate', async function(req, res) {
     const browser = await puppeteer.launch();
+    // const browser = await puppeteer.launch({
+    //     headless: true,
+    //     executablePath:'/app/node_modules/puppeteer/..',
+    //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    // });
 
     const PLATFORM = req.query.platform;
     const USERNAME = req.query.username;
@@ -118,7 +123,7 @@ app.get('/validate', async function(req, res) {
 });
 
 
-app.listen(process.env.PORT || 3000, function(){
+app.listen(process.env.PORT || 5000, function(){
     console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
 });
 
