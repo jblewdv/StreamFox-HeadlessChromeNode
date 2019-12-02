@@ -14,12 +14,12 @@ app.get('/', function(req, res) {
 
 /* APP - GET route */
 app.get('/validate', async function(req, res) {
-    // const browser = await puppeteer.launch();
-    const browser = await puppeteer.launch({
-        headless: true,
-        executablePath:'/app/node_modules/puppeteer/.local-chromium/linux-720639/chrome-linux/chrome',
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await puppeteer.launch({args: ['--no-sandbox']});
+    // const browser = await puppeteer.launch({
+    //     headless: true,
+    //     executablePath:'/app/node_modules/puppeteer/.local-chromium/linux-720639/chrome-linux/chrome',
+    //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    // });
 
     const PLATFORM = req.query.platform;
     const USERNAME = req.query.username;
