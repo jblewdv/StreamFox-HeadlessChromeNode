@@ -9,7 +9,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 /* APP - GET route */
 app.get('/validate', async function(req, res) {
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch();
 
     const PLATFORM = req.query.platform;
     const USERNAME = req.query.username;
