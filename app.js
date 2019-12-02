@@ -14,12 +14,13 @@ app.get('/', function(req, res) {
 
 /* APP - GET route */
 app.get('/validate', async function(req, res) {
-    // const browser = await puppeteer.launch({args: ['--no-sandbox']});
-    const browser = await puppeteer.launch({
-        headless: true,
-        executablePath:'/node_modules/puppeteer/.local-chromium/linux-706915/chrome-linux/chrome',
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    console.log("starting chrome");
+    // const browser = await puppeteer.launch({
+    //     headless: true,
+    //     executablePath:'/node_modules/puppeteer/.local-chromium/linux-706915/chrome-linux/chrome',
+    //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    // });
 
     const PLATFORM = req.query.platform;
     const USERNAME = req.query.username;
@@ -123,12 +124,12 @@ app.get('/validate', async function(req, res) {
 });
 
 
-app.listen(process.env.PORT || 5000, function(){
-    console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
-});
-
-
-
-// app.listen(5000, function () {
-//   console.log('Chrome API listening on port 5000!')
+// app.listen(process.env.PORT || 5000, function(){
+//     console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
 // });
+
+
+
+app.listen(5000, function () {
+  console.log('Chrome API listening on port 5000!')
+});
