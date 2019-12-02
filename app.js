@@ -7,6 +7,11 @@ const app = express()
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+app.get('/', function(req, res) {
+    res.send({ status: 200, message: "hello"} );
+});
+
 /* APP - GET route */
 app.get('/validate', async function(req, res) {
     const browser = await puppeteer.launch();
