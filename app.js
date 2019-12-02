@@ -17,7 +17,7 @@ app.get('/validate', async function(req, res) {
     // const browser = await puppeteer.launch();
     const browser = await puppeteer.launch({
         headless: true,
-        executablePath:'/app/node_modules/puppeteer/.local-chromium/linux-706915/chrome-linux/chrome',
+        executablePath:'/app/node_modules/puppeteer/.local-chromium/linux-720639/chrome-linux/chrome',
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
