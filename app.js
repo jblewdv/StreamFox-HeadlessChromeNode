@@ -1,40 +1,27 @@
+/*
+
+Date: 12/2/2019
+Author: Joshua Blew
+
+*/
+
+'use strict';
+
 const express = require('express');
 const puppeteer = require('puppeteer');
 const bodyParser = require('body-parser');
+
 require('dotenv/config');
-
 const app = express()
-
 app.use(bodyParser.urlencoded({ extended: true }));
 
-
-app.get('/', function(req, res) {
-    res.send({ status: 200, message: "hello"} );
-});
-
 /* APP - GET route */
-app.get('/validate', async function(req, res) {
+app.get('/', async function(req, res) {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    console.log("starting chrome");
-    // const browser = await puppeteer.launch({
-    //     headless: true,
-    //     executablePath:'/node_modules/puppeteer/.local-chromium/linux-706915/chrome-linux/chrome',
-    //     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    // });
-
+    
     const PLATFORM = req.query.platform;
     const USERNAME = req.query.username;
     const PASSWORD = req.query.password;
-
-    /*
-    var loginLink = process.env[PLATFORM + '_LOGIN_URI'];
-    var usernameDiv = process.env[PLATFORM + '_USERNAME_DIV'];
-    var passwordDiv = process.env[PLATFORM + '_PASSWORD_DIV'];
-    var submitPath = process.env[PLATFORM + '_SUBMIT_PATH'];
-    var submitIndex = process.env[PLATFORM + "_SUBMIT_INDEX"];
-    var successType = process.env[PLATFORM + 'SUCCUSS_TYPE'];
-    var successValue = process.env[PLATFORM + 'SUCCESS_VALUE'];
-    */
 
     const page = await browser.newPage();
 
@@ -125,11 +112,5 @@ app.get('/validate', async function(req, res) {
 
 
 app.listen(process.env.PORT || 5000, function(){
-    console.log("Express server listening on port %d in %s mode", this.address().port, app.settings.env);
+    console.log("Chrome server listening on port %d in %s mode", this.address().port, app.settings.env);
 });
-
-
-
-// app.listen(5000, function () {
-//   console.log('Chrome API listening on port 5000!')
-// });
