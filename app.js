@@ -19,15 +19,15 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.get('/', async function(req, res) {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     
-    const PLATFORM = req.query.platform;
-    const USERNAME = req.query.username;
-    const PASSWORD = req.query.password;
+    const SERVICE = req.body.service;
+    const EMAIL = req.body.email;
+    const PASSWORD = req.body.password;
 
     const page = await browser.newPage();
 
-    if (PLATFORM === 'netflix') {
+    if (SERVICE === 'netflix') {
         await page.goto('https://www.netflix.com/login');
-        await page.type('#id_userLoginId', USERNAME);
+        await page.type('#id_userLoginId', EMAIL);
         await page.type('#id_password', PASSWORD);
         await page.evaluate(() => {
             let buttons = document.getElementsByClassName('login-button');
@@ -42,16 +42,16 @@ app.get('/', async function(req, res) {
             enter.click();
         });
         if (page.url() === 'https://www.netflix.com/browse') {
-            res.send({ type: PLATFORM, validation: true });
+            res.send({ type: SERVICE, validation: true });
         }
         else {
-            res.send({ type: PLATFORM, validation: false });
+            res.send({ type: SERVICE, validation: false });
         }
     }
 
-    if (PLATFORM === 'hulu') {
+    if (SERVICE === 'hulu') {
         await page.goto('https://www.hulu.com/login');
-        await page.type('#email_id', USERNAME);
+        await page.type('#email_id', EMAIL);
         await page.type('#password_id', PASSWORD);
         await page.evaluate(() => {
             let buttons = document.getElementsByClassName('login-button');
@@ -60,18 +60,18 @@ app.get('/', async function(req, res) {
         });
         await page.waitForNavigation();
         if (page.url() === 'https://www.hulu.com/profiles?next=/') {
-            res.send({ type: PLATFORM, validation: true });
+            res.send({ type: SERVICE, validation: true });
         }
         else {
-            res.send({ type: PLATFORM, validation: false });
+            res.send({ type: SERVICE, validation: false });
         }
     }
     
     // ! needs validation url check !
-    if (PLATFORM === 'cbs') {
+    if (SERVICE === 'cbs') {
         await page.goto('https://www.cbs.com/cbs-all-access/signin/');
         await page.waitForSelector('.qt-emailtxtfield');
-        await page.type('.qt-emailtxtfield', USERNAME);
+        await page.type('.qt-emailtxtfield', EMAIL);
         await page.type('.qt-passwordtxtfield', PASSWORD);
         await page.evaluate(() => {
             let buttons = document.getElementsByClassName('button');
@@ -80,17 +80,17 @@ app.get('/', async function(req, res) {
         });
         await page.waitForNavigation();
         if (page.url() === 'https://www.showtime.com/#') {
-            res.send({ type: PLATFORM, validation: true });
+            res.send({ type: SERVICE, validation: true });
         }
         else {
-            res.send({ type: PLATFORM, validation: false });
+            res.send({ type: SERVICE, validation: false });
         }
     }
 
-    if (PLATFORM === 'showtime') {
+    if (SERVICE === 'showtime') {
         await page.goto('https://www.showtime.com/#signin');
         await page.waitForSelector('#email');
-        await page.type('#email', USERNAME);
+        await page.type('#email', EMAIL);
         await page.type('#password', PASSWORD);
         await page.evaluate(() => {
             let buttons = document.getElementsByClassName('button');
