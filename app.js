@@ -99,10 +99,10 @@ app.get('/', async function(req, res) {
         });
         await page.waitForNavigation();
         if (page.url() === 'https://www.showtime.com/#') {
-            res.send({ type: PLATFORM, validation: true });
+            res.send({ type: SERVICE, validation: true });
         }
         else {
-            res.send({ type: PLATFORM, validation: false });
+            res.send({ type: SERVICE, validation: false });
         }
 
     }
