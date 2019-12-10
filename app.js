@@ -15,6 +15,32 @@ require('dotenv/config');
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }));
 
+
+app.get('/test', async function(req, res, next) {
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+
+    if ('hulu' === 'hulu') {
+        await page.goto('https://www.hulu.com/login');
+        await page.type('#email_id', 'joshua.blewj@gmail.com');
+        await page.type('#password_id', 'Isuckatdota2');
+        await page.evaluate(() => {
+            let buttons = document.getElementsByClassName('login-button');
+            let enter = buttons[1];
+            enter.click();
+        });
+        await page.waitForNavigation();
+        var cookies = await page.cookies();
+        res.send({data: cookies});
+        // if (page.url() === 'https://www.hulu.com/profiles?next=/') {
+        //     res.send({ type: PLATFORM, validation: true });
+        // }
+        // else {
+        //     res.send({ type: PLATFORM, validation: false });
+        // }
+    }
+})
+
 /* APP - GET route */
 app.get('/', async function(req, res) {
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
