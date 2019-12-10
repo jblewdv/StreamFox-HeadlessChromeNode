@@ -39,6 +39,7 @@ app.get('/test', async function(req, res, next) {
         //     res.send({ type: PLATFORM, validation: false });
         // }
     }
+    await browser.close();
 })
 
 /* APP - GET route */
