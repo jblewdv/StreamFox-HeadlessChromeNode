@@ -17,7 +17,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.get('/test', async function(req, res, next) {
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     if ('hulu' === 'hulu') {
