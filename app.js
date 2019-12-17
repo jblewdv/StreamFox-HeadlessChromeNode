@@ -16,223 +16,230 @@ require('dotenv/config');
 
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }));
+const MODE = 'prod';
 
 
 app.get('/getCookies', async function(req, res, next) {
     var creds;
-    // local
-    // request.get("http://localhost:3000/users/fetch?service=" + req.query.service, function(error, response, body) { 
-    //     creds = JSON.parse(body);
-    // });
-    // production
-    request.get("https://streamfox-web.herokuapp.com/users/fetch?service=" + req.query.service, function(error, response, body) { 
-        creds = JSON.parse(body);
-    });
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    // const browser = await puppeteer.launch();
-    const page = await browser.newPage();
-
-    if (creds['type'] === 'netflix') {
-        console.log("Starting Netflix session");
-        await page.goto('https://www.netflix.com/login', {
-            timeout: 60000
+    if (MODE === 'prod') {
+        request.get("https://streamfox-web.herokuapp.com/users/fetch?service=" + req.query.service, function(error, response, body) { 
+            creds = JSON.parse(body);
         });
-        await page.type('#id_userLoginId', creds['email']);
-        await page.type('#id_password', creds['password']);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('login-button');
-            let submit = buttons[0];
-            
-            submit.click();
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    } else {
+        request.get("http://localhost:3000/users/fetch?service=" + req.query.service, function(error, response, body) { 
+            creds = JSON.parse(body);
         });
-        await page.waitForNavigation();
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('profile-icon');
-            let enter = buttons[0];  
-            enter.click();
-        });
-  
-        var cookies = await page.cookies();
-        // await page.goto('https://www.netflix.com/SignOut?lnkctr=mL');
-        res.send({ data: cookies });
+        const browser = await puppeteer.launch();
     }
 
-    if (creds['type'] === 'hulu') {
-        console.log("Starting Hulu session");
-        await page.goto('https://www.hulu.com/login',  {
-            timeout: 60000
-        });
-        await page.type('#email_id', creds['email']);
-        await page.type('#password_id', creds['password']);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('login-button');
-            let enter = buttons[1];
-            enter.click();
-        });
-        await page.waitForNavigation();
-        
-        var cookies = await page.cookies();
-        res.send({ data: cookies });
-       
+    const page = await browser.newPage();
+
+    if (creds['type'] === 'netflix') {        
+        try {
+            await page.goto('https://www.netflix.com/login');
+            await page.type('#id_userLoginId', creds['email']);
+            await page.type('#id_password', creds['password']);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('login-button');
+                let submit = buttons[0];
+                
+                submit.click();
+            });
+            await page.waitForNavigation();
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('profile-icon');
+                let enter = buttons[0];  
+                enter.click();
+            });
+    
+            var cookies = await page.cookies();
+            // await page.goto('https://www.netflix.com/SignOut?lnkctr=mL');
+            res.send({ data: cookies });
+        } catch(err) {
+            res.send({ data: null, error: err })
+        } 
+    }
+
+    if (creds['type'] === 'hulu') {        
+        try {
+            await page.goto('https://www.hulu.com/login');
+            await page.type('#email_id', creds['email']);
+            await page.type('#password_id', creds['password']);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('login-button');
+                let enter = buttons[1];
+                enter.click();
+            });
+            await page.waitForNavigation();
+            
+            var cookies = await page.cookies();
+            res.send({ data: cookies });
+        } catch (err) {
+            res.send({ data: null, error: err })
+        }
     }
     
     // ! needs validation url check !
     if (creds['type'] === 'cbs') {
-        console.log("Starting CBS session");
-        await page.goto('https://www.cbs.com/cbs-all-access/signin/');
-        await page.waitForSelector('.qt-emailtxtfield');
-        await page.type('.qt-emailtxtfield', creds['email']);
-        await page.type('.qt-passwordtxtfield', creds['password']);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('button');
-            let enter = buttons[0];
-            enter.click();
-        });
-        await page.waitForNavigation();
-        
-        var cookies = await page.cookies();
-        res.send({ data: cookies });
+        try {
+            await page.goto('https://www.cbs.com/cbs-all-access/signin/');
+            await page.waitForSelector('.qt-emailtxtfield');
+            await page.type('.qt-emailtxtfield', creds['email']);
+            await page.type('.qt-passwordtxtfield', creds['password']);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('button');
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+            
+            var cookies = await page.cookies();
+            res.send({ data: cookies });
+        } catch (err) {
+            res.send({ data: null, error: err })
+        } 
     }
 
     if (creds['type'] === 'showtime') {
-        console.log("Starting Showtime session");
-        await page.goto('https://www.showtime.com/#signin', {
-            timeout: 60000
-        });
-        await page.waitForSelector('#email');
-        await page.type('#email', creds['email']);
-        await page.type('#password', creds['password']);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('button');
-            let enter = buttons[0];
-            enter.click();
-        });
-        await page.waitForNavigation();
-       
-        var cookies = await page.cookies();
-        res.send({ data: cookies });
+        try {
+            await page.goto('https://www.showtime.com/#signin');
+            await page.waitForSelector('#email');
+            await page.type('#email', creds['email']);
+            await page.type('#password', creds['password']);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('button');
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        
+            var cookies = await page.cookies();
+            res.send({ data: cookies });
+        } catch (err) {
+            res.send({ data: null, error: err })
+        }
     }
 
     await browser.close();
 });
 
 /* APP - GET route */
-app.get('/', async function(req, res) {
+app.get('/checkValid', async function(req, res) {
 
     const SERVICE = req.query.service;
     const EMAIL = req.query.email;
     const PASSWORD = req.query.password;
-    // const SERVICE = req.body.service;
-    // const EMAIL = req.body.email;
-    // const PASSWORD = req.body.password;
-  
 
-    // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    const browser = await puppeteer.launch();
+    if (MODE === 'prod') {
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    } else {
+        const browser = await puppeteer.launch();
+    }
+
     const page = await browser.newPage();
 
     if (SERVICE === 'netflix') {
-        await page.goto('https://www.netflix.com/login');
-        await page.type('#id_userLoginId', EMAIL);
-        await page.type('#id_password', PASSWORD);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('login-button');
-            let submit = buttons[0];
+        try {
+            await page.goto('https://www.netflix.com/login');
+            await page.type('#id_userLoginId', EMAIL);
+            await page.type('#id_password', PASSWORD);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('login-button');
+                let submit = buttons[0];
+                
+                submit.click();
+            });
+            await page.waitForNavigation();
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('profile-icon');
+                let enter = buttons[0];  
+                enter.click();
+            });
             
-            submit.click();
-        });
-        await page.waitForNavigation();
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('profile-icon');
-            let enter = buttons[0];  
-            enter.click();
-        });
-        if (getCookies === true) {
-            var cookies = await page.cookies();
-            res.send({ data: cookies });
-        } else {
             if (page.url() === 'https://www.netflix.com/browse') {
                 res.send({ type: SERVICE, validation: true });
             }
             else {
                 res.send({ type: SERVICE, validation: false });
             }
-        }
+        } catch (err) {
+            res.send({ type: SERVICE, error: err });
+        }  
     }
 
     if (SERVICE === 'hulu') {
-        await page.goto('https://www.hulu.com/login');
-        await page.type('#email_id', EMAIL);
-        await page.type('#password_id', PASSWORD);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('login-button');
-            let enter = buttons[1];
-            enter.click();
-        });
-        await page.waitForNavigation();
+        try {
+            await page.goto('https://www.hulu.com/login');
+            await page.type('#email_id', EMAIL);
+            await page.type('#password_id', PASSWORD);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('login-button');
+                let enter = buttons[1];
+                enter.click();
+            });
+            await page.waitForNavigation();
 
-        if (getCookies === 'true') {
-            var cookies = await page.cookies();
-            res.send({ data: cookies });
-        } else {
             if (page.url() === 'https://www.hulu.com/profiles?next=/') {
                 res.send({ type: SERVICE, validation: true });
             }
             else {
                 res.send({ type: SERVICE, validation: false });
             }
+        } catch (err) {
+            res.send({ type: SERVICE, error: err })
         }
     }
     
     // ! needs validation url check !
     if (SERVICE === 'cbs') {
-        await page.goto('https://www.cbs.com/cbs-all-access/signin/');
-        await page.waitForSelector('.qt-emailtxtfield');
-        await page.type('.qt-emailtxtfield', EMAIL);
-        await page.type('.qt-passwordtxtfield', PASSWORD);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('button');
-            let enter = buttons[0];
-            enter.click();
-        });
-        await page.waitForNavigation();
-        
-        if (getCookies === true) {
-            var cookies = await page.cookies();
-            res.send({ data: cookies });
-        } else {
+        try {
+            await page.goto('https://www.cbs.com/cbs-all-access/signin/');
+            await page.waitForSelector('.qt-emailtxtfield');
+            await page.type('.qt-emailtxtfield', EMAIL);
+            await page.type('.qt-passwordtxtfield', PASSWORD);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('button');
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+            
+       
             if (page.url() === 'https://www.cbs.com/#') {
                 res.send({ type: SERVICE, validation: true });
             }
             else {
                 res.send({ type: SERVICE, validation: false });
             }
-        }   
+        } catch (err) {
+            res.send({ type: SERVICE, error: err })
+        }  
     }
 
     if (SERVICE === 'showtime') {
-        await page.goto('https://www.showtime.com/#signin');
-        await page.waitForSelector('#email');
-        await page.type('#email', EMAIL);
-        await page.type('#password', PASSWORD);
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName('button');
-            let enter = buttons[0];
-            enter.click();
-        });
-        await page.waitForNavigation();
+        try {
+            await page.goto('https://www.showtime.com/#signin');
+            await page.waitForSelector('#email');
+            await page.type('#email', EMAIL);
+            await page.type('#password', PASSWORD);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName('button');
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        
        
-        if (getCookies === true) {
-            var cookies = await page.cookies();
-            res.send({ data: cookies });
-        } else {
             if (page.url() === 'https://www.showtime.com/#') {
                 res.send({ type: SERVICE, validation: true });
             }
             else {
                 res.send({ type: SERVICE, validation: false });
             }
+        } catch (err) {
+            res.send({ type: SERVICE, error: err })
         }
     }
 
