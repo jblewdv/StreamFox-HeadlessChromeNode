@@ -16,24 +16,16 @@ require('dotenv/config');
 
 const app = express()
 app.use(bodyParser.urlencoded({ extended: true }));
-const MODE = 'prod';
 
 
 app.get('/getCookies', async function(req, res, next) {
     var creds;
 
-    if (MODE === 'prod') {
-        request.get("https://streamfox-web.herokuapp.com/users/fetch?service=" + req.query.service, function(error, response, body) { 
-            creds = JSON.parse(body);
-        });
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    } else {
-        request.get("http://localhost:3000/users/fetch?service=" + req.query.service, function(error, response, body) { 
-            creds = JSON.parse(body);
-        });
-        const browser = await puppeteer.launch();
-    }
+    request.get("https://streamfox-web.herokuapp.com/users/fetch?service=" + req.query.service, function(error, response, body) { 
+        creds = JSON.parse(body);
+    });
 
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     if (creds['type'] === 'netflix') {        
@@ -132,12 +124,7 @@ app.get('/checkValid', async function(req, res) {
     const EMAIL = req.query.email;
     const PASSWORD = req.query.password;
 
-    if (MODE === 'prod') {
-        const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    } else {
-        const browser = await puppeteer.launch();
-    }
-
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     if (SERVICE === 'netflix') {
