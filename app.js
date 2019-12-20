@@ -19,130 +19,128 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 app.get('/getCookies', async function(req, res, next) {
-    var service;
+    request.get("https://streamfox-web.herokuapp.com/users/fetch?type=" + req.query.service, async function(error, response, body) { 
+        var service = JSON.parse(body).service;
 
-    request.get("https://streamfox-web.herokuapp.com/users/fetch?type=" + req.query.service, function(error, response, body) { 
-        service = JSON.parse(body);
-    });
+        const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+        const page = await browser.newPage();
 
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    const page = await browser.newPage();
-
-    if (service.type === 'netflix') {        
-        try {
-            await page.goto('https://www.netflix.com/login');
-            await page.type('#id_userLoginId', service.email);
-            await page.type('#id_password', service.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('login-button');
-                let submit = buttons[0];
-                
-                submit.click();
-            });
-            await page.waitForNavigation();
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('profile-icon');
-                let enter = buttons[0];  
-                enter.click();
-            });
-    
-            var cookies = await page.cookies();
-            // await page.goto('https://www.netflix.com/SignOut?lnkctr=mL');
-            res.send({ 
-                cookies: cookies,
-                service: service 
-            });
-        } catch(err) {
-            res.send({ 
-                cookies: null,
-                service: service,
-                error: err 
-            });
-        } 
-    }
-
-    if (service.type === 'hulu') {        
-        try {
-            await page.goto('https://www.hulu.com/login');
-            await page.type('#email_id', service.email);
-            await page.type('#password_id', service.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('login-button');
-                let enter = buttons[1];
-                enter.click();
-            });
-            await page.waitForNavigation();
-            
-            var cookies = await page.cookies();
-            res.send({ 
-                cookies: cookies,
-                service: service 
-            });
-        } catch (err) {
-            res.send({ 
-                cookies: null,
-                service: service,
-                error: err
-            });
-        }
-    }
-    
-    // ! needs validation url check !
-    if (service.type === 'cbs') {
-        try {
-            await page.goto('https://www.cbs.com/cbs-all-access/signin/');
-            await page.waitForSelector('.qt-emailtxtfield');
-            await page.type('.qt-emailtxtfield', service.email);
-            await page.type('.qt-passwordtxtfield', service.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('button');
-                let enter = buttons[0];
-                enter.click();
-            });
-            await page.waitForNavigation();
-            
-            var cookies = await page.cookies();
-            res.send({ 
-                cookies: cookies,
-                service: service 
-            });
-        } catch (err) {
-            res.send({ 
-                cookies: null,
-                service: service,
-                error: err
-            });
-        } 
-    }
-
-    if (service.type === 'showtime') {
-        try {
-            await page.goto('https://www.showtime.com/#signin');
-            await page.waitForSelector('#email');
-            await page.type('#email', service.email);
-            await page.type('#password', service.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('button');
-                let enter = buttons[0];
-                enter.click();
-            });
-            await page.waitForNavigation();
+        if (service.type === 'netflix') {        
+            try {
+                await page.goto('https://www.netflix.com/login');
+                await page.type('#id_userLoginId', service.email);
+                await page.type('#id_password', service.password);
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName('login-button');
+                    let submit = buttons[0];
+                    
+                    submit.click();
+                });
+                await page.waitForNavigation();
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName('profile-icon');
+                    let enter = buttons[0];  
+                    enter.click();
+                });
         
-            var cookies = await page.cookies();
-            res.send({ 
-                cookies: cookies,
-                service: service 
-            });
-        } catch (err) {
-            res.send({ 
-                cookies: null,
-                service: service,
-                error: err
-            });
+                var cookies = await page.cookies();
+                // await page.goto('https://www.netflix.com/SignOut?lnkctr=mL');
+                res.send({ 
+                    cookies: cookies,
+                    service: service 
+                });
+            } catch(err) {
+                res.send({ 
+                    cookies: null,
+                    service: service,
+                    error: err 
+                });
+            } 
         }
-    }
 
-    await browser.close();
+        if (service.type === 'hulu') {        
+            try {
+                await page.goto('https://www.hulu.com/login');
+                await page.type('#email_id', service.email);
+                await page.type('#password_id', service.password);
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName('login-button');
+                    let enter = buttons[1];
+                    enter.click();
+                });
+                await page.waitForNavigation();
+                
+                var cookies = await page.cookies();
+                res.send({ 
+                    cookies: cookies,
+                    service: service 
+                });
+            } catch (err) {
+                res.send({ 
+                    cookies: null,
+                    service: service,
+                    error: err
+                });
+            }
+        }
+        
+        // ! needs validation url check !
+        if (service.type === 'cbs') {
+            try {
+                await page.goto('https://www.cbs.com/cbs-all-access/signin/');
+                await page.waitForSelector('.qt-emailtxtfield');
+                await page.type('.qt-emailtxtfield', service.email);
+                await page.type('.qt-passwordtxtfield', service.password);
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName('button');
+                    let enter = buttons[0];
+                    enter.click();
+                });
+                await page.waitForNavigation();
+                
+                var cookies = await page.cookies();
+                res.send({ 
+                    cookies: cookies,
+                    service: service 
+                });
+            } catch (err) {
+                res.send({ 
+                    cookies: null,
+                    service: service,
+                    error: err
+                });
+            } 
+        }
+
+        if (service.type === 'showtime') {
+            try {
+                await page.goto('https://www.showtime.com/#signin');
+                await page.waitForSelector('#email');
+                await page.type('#email', service.email);
+                await page.type('#password', service.password);
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName('button');
+                    let enter = buttons[0];
+                    enter.click();
+                });
+                await page.waitForNavigation();
+            
+                var cookies = await page.cookies();
+                res.send({ 
+                    cookies: cookies,
+                    service: service 
+                });
+            } catch (err) {
+                res.send({ 
+                    cookies: null,
+                    service: service,
+                    error: err
+                });
+            }
+        }
+
+        await browser.close();     
+    });
 });
 
 /* APP - GET route */
