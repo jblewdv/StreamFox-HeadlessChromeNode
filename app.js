@@ -120,7 +120,7 @@ app.get('/getCookies', async function(req, res, next) {
             await page.goto('https://www.showtime.com/#signin');
             await page.waitForSelector('#email');
             await page.type('#email', service.email);
-            await page.type('#password', service.password]);
+            await page.type('#password', service.password);
             await page.evaluate(() => {
                 let buttons = document.getElementsByClassName('button');
                 let enter = buttons[0];
