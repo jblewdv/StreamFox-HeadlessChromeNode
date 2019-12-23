@@ -1,5 +1,5 @@
 {
-  "name": "StreamFox-Chrome Node",
+  "name": "streamfox-headless-chrome-node",
   "version": "1.0.0",
   "description": "Headless Chrome node for login credential testing and cookie retrieval",
   "repository": {
