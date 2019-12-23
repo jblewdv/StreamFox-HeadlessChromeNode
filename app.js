@@ -1,50 +1,66 @@
-/*
 
-Date: 12/2/2019
-Author: Joshua Blew
 
+/* Copyright (C) StreamFox, LLC - All Rights Reserved
+ * Unauthorized copying of this file, via any medium is strictly prohibited
+ * Proprietary and confidential
+ * Written by Joshua Blew <jblew.business@gmail.com>, December 2019
 */
 
-'use strict';
 
+// Modules
+const request = require('request');
 const express = require('express');
 const puppeteer = require('puppeteer');
 const bodyParser = require('body-parser');
-const request = require('request');
 
-require('dotenv/config');
+require('dotenv/config'); // Config vars
 
 const app = express();
-app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(bodyParser.urlencoded({ 
+    extended: true 
+}));
+
+/*
+    --- ROUTES ---
+*/
 
 
+/*
+    Cookie Retrieval for Login 
+*/
 app.get('/getCookies', async function(req, res, next) {
-    request.get("https://streamfox-web.herokuapp.com/users/fetch?type=" + req.query.service, async function(error, response, body) { 
+    request.get(process.env.FETCH_URL + "?type=" + req.query.service, async function(error, response, body) { 
+        
+        // Fetch a service for the user
         var service = JSON.parse(body).service;
 
+        // Setup puppeteer.js
         const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
         const page = await browser.newPage();
 
         if (service.type === 'netflix') {        
             try {
-                await page.goto('https://www.netflix.com/login');
-                await page.type('#id_userLoginId', service.email);
-                await page.type('#id_password', service.password);
+                // Navigate to Netflix login page and insert login credentials
+                await page.goto(process.env.NETFLIX_LOGIN_URI);
+                await page.type(process.env.NETFLIX_USERNAME_DIV, service.email);
+                await page.type(process.env.NETFLIX_PASSWORD_DIV, service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName('login-button');
-                    let submit = buttons[0];
-                    
+                    let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH);
+                    let submit = buttons[process.env.NETFLIX_SUBMIT_INDEX];
                     submit.click();
                 });
                 await page.waitForNavigation();
+                
+                // Select a Netflix profile
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName('profile-icon');
+                    let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH_AUX);
                     let enter = buttons[0];  
                     enter.click();
                 });
         
+                // Grab Netflix cookies and return
                 var cookies = await page.cookies();
-                // await page.goto('https://www.netflix.com/SignOut?lnkctr=mL');
                 res.send({ 
                     cookies: cookies,
                     service: service 
@@ -60,16 +76,18 @@ app.get('/getCookies', async function(req, res, next) {
 
         if (service.type === 'hulu') {        
             try {
-                await page.goto('https://www.hulu.com/login');
-                await page.type('#email_id', service.email);
-                await page.type('#password_id', service.password);
+                // Navigate to Hulu login page and insert login credentials
+                await page.goto(process.env.HULU_LOGIN_URI);
+                await page.type(process.env.HULU_USERNAME_DIV, service.email);
+                await page.type(process.env.HULU_PASSWORD_DIV, service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName('login-button');
-                    let enter = buttons[1];
+                    let buttons = document.getElementsByClassName(process.env.HULU_SUBMIT_PATH);
+                    let enter = buttons[process.env.HULU_SUBMIT_INDEX];
                     enter.click();
                 });
                 await page.waitForNavigation();
                 
+                // Grab Netflix cookies and return
                 var cookies = await page.cookies();
                 res.send({ 
                     cookies: cookies,
@@ -83,21 +101,22 @@ app.get('/getCookies', async function(req, res, next) {
                 });
             }
         }
-        
-        // ! needs validation url check !
+    
         if (service.type === 'cbs') {
             try {
-                await page.goto('https://www.cbs.com/cbs-all-access/signin/');
-                await page.waitForSelector('.qt-emailtxtfield');
-                await page.type('.qt-emailtxtfield', service.email);
-                await page.type('.qt-passwordtxtfield', service.password);
+                // Navigate to CBS login page and insert login credentials
+                await page.goto(process.env.CBS_LOGIN_URI);
+                await page.waitForSelector(process.env.CBS_USERNAME_DIV);
+                await page.type(process.env.CBS_USERNAME_DIV, service.email);
+                await page.type(process.env.CBS_PASSWORD_DIV, service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName('button');
-                    let enter = buttons[0];
+                    let buttons = document.getElementsByClassName(process.env.CBS_SUBMIT_PATH);
+                    let enter = buttons[process.env.CBS_SUBMIT_INDEX];
                     enter.click();
                 });
                 await page.waitForNavigation();
                 
+                // Grab CBS cookies and return
                 var cookies = await page.cookies();
                 res.send({ 
                     cookies: cookies,
@@ -114,17 +133,19 @@ app.get('/getCookies', async function(req, res, next) {
 
         if (service.type === 'showtime') {
             try {
-                await page.goto('https://www.showtime.com/#signin');
-                await page.waitForSelector('#email');
-                await page.type('#email', service.email);
-                await page.type('#password', service.password);
+                // Navigate to Showtime login page and insert login credentials
+                await page.goto(process.env.SHOWTIME_LOGIN_URI);
+                await page.waitForSelector(process.env.SHOWTIME_USERNAME_DIV);
+                await page.type(process.env.SHOWTIME_USERNAME_DIV, service.email);
+                await page.type(process.env.SHOWTIME_PASSWORD_DIV, service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName('button');
-                    let enter = buttons[0];
+                    let buttons = document.getElementsByClassName(process.env.SHOWTIME_SUBMIT_PATH);
+                    let enter = buttons[process.env.SHOWTIME_SUBMIT_INDEX];
                     enter.click();
                 });
                 await page.waitForNavigation();
             
+                // Grab Showtime cookies and return
                 var cookies = await page.cookies();
                 res.send({ 
                     cookies: cookies,
@@ -139,127 +160,172 @@ app.get('/getCookies', async function(req, res, next) {
             }
         }
 
+        // Close puppeteer.js browser
         await browser.close();     
     });
 });
 
-/* APP - GET route */
-app.get('/checkValid', async function(req, res) {
 
-    const SERVICE = req.query.service;
-    const EMAIL = req.query.email;
-    const PASSWORD = req.query.password;
-
+/*
+    Test if credentials are valid
+*/
+app.get('/checkValid', async function(req, res, next) {
+    
+    // Setup puppeteer.js
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
-    if (SERVICE === 'netflix') {
+    if (req.query.service === 'netflix') {
         try {
-            await page.goto('https://www.netflix.com/login');
-            await page.type('#id_userLoginId', EMAIL);
-            await page.type('#id_password', PASSWORD);
+            // Navigate to Netflix login page and insert login credentials
+            await page.goto(process.env.NETFLIX_LOGIN_URI);
+            await page.type(process.env.NETFLIX_EMAIL_DIV, req.query.email);
+            await page.type(process.env.NETFLIX_PASSWORD_DIV, req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('login-button');
-                let submit = buttons[0];
-                
+                let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH);
+                let submit = buttons[process.env.NETFLIX_SUBMIT_INDEX];
                 submit.click();
             });
             await page.waitForNavigation();
+
+            // Select a Netflix profile
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('profile-icon');
+                let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH_AUX);
                 let enter = buttons[0];  
                 enter.click();
             });
             
-            if (page.url() === 'https://www.netflix.com/browse') {
-                res.send({ type: SERVICE, validation: true });
-            }
-            else {
-                res.send({ type: SERVICE, validation: false });
+            // Check if login succeeded
+            if (page.url() === process.env.NETFLIX_SUCCESS_VALUE) { // TODO: update res.send data
+                res.send({ 
+                    type: req.query.service, 
+                    validation: true 
+                });
+            } else {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: false 
+                });
             }
         } catch (err) {
-            res.send({ type: SERVICE, error: err });
+            res.send({ 
+                type: req.query.service, 
+                error: err 
+            });
         }  
     }
 
-    if (SERVICE === 'hulu') {
+    if (req.query.service === 'hulu') {
         try {
-            await page.goto('https://www.hulu.com/login');
-            await page.type('#email_id', EMAIL);
-            await page.type('#password_id', PASSWORD);
+            // Navigate to Hulu login page and insert login credentials
+            await page.goto(process.env.HULU_LOGIN_URI);
+            await page.type(process.env.HULU_USERNAME_DIV, req.query.email);
+            await page.type(process.env.HULU_PASSWORD_DIV, req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('login-button');
-                let enter = buttons[1];
+                let buttons = document.getElementsByClassName(process.env.HULU_SUBMIT_PATH);
+                let enter = buttons[process.env.HULU_SUBMIT_INDEX];
                 enter.click();
             });
             await page.waitForNavigation();
 
-            if (page.url() === 'https://www.hulu.com/profiles?next=/') {
-                res.send({ type: SERVICE, validation: true });
-            }
-            else {
-                res.send({ type: SERVICE, validation: false });
+            // Check if login succeeded
+            if (page.url() === process.env.HULU_SUCCESS_VALUE) { // TODO
+                res.send({ 
+                    type: req.query.service, 
+                    validation: true 
+                });
+            } else {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: false 
+                });
             }
         } catch (err) {
-            res.send({ type: SERVICE, error: err })
+            res.send({ 
+                type: req.query.service, 
+                error: err 
+            });
         }
     }
     
     // ! needs validation url check !
-    if (SERVICE === 'cbs') {
+    if (req.query.service === 'cbs') {
         try {
-            await page.goto('https://www.cbs.com/cbs-all-access/signin/');
-            await page.waitForSelector('.qt-emailtxtfield');
-            await page.type('.qt-emailtxtfield', EMAIL);
-            await page.type('.qt-passwordtxtfield', PASSWORD);
+            // Navigate to CBS login page and insert login credentials
+            await page.goto(process.env.CBS_LOGIN_URI);
+            await page.waitForSelector(process.env.CBS_USERNAME_DIV);
+            await page.type(process.env.CBS_USERNAME_DIV, req.query.email);
+            await page.type(process.env.CBS_PASSWORD_DIV, req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('button');
-                let enter = buttons[0];
+                let buttons = document.getElementsByClassName(process.env.CBS_SUBMIT_PATH);
+                let enter = buttons[process.env.CBS_SUBMIT_INDEX];
                 enter.click();
             });
             await page.waitForNavigation();
             
-       
-            if (page.url() === 'https://www.cbs.com/#') {
-                res.send({ type: SERVICE, validation: true });
-            }
-            else {
-                res.send({ type: SERVICE, validation: false });
+            // Check if login succeeded
+            if (page.url() === process.env.CBS_SUCCESS_VALUE) { // TODO
+                res.send({ 
+                    type: req.query.service, 
+                    validation: true 
+                });
+            } else {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: false 
+                });
             }
         } catch (err) {
-            res.send({ type: SERVICE, error: err })
+            res.send({ 
+                type: req.query.service, 
+                error: err 
+            });
         }  
     }
 
-    if (SERVICE === 'showtime') {
+    if (req.query.service === 'showtime') {
         try {
-            await page.goto('https://www.showtime.com/#signin');
-            await page.waitForSelector('#email');
-            await page.type('#email', EMAIL);
-            await page.type('#password', PASSWORD);
+            // Navigate to Showtime login page and insert login credentials
+            await page.goto(process.env.SHOWTIME_LOGIN_URI);
+            await page.waitForSelector(process.env.SHOWTIME_USERNAME_DIV);
+            await page.type(process.env.SHOWTIME_USERNAME_DIV, req.query.email);
+            await page.type(process.env.SHOWTIME_PASSWORD_DIV, req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName('button');
-                let enter = buttons[0];
+                let buttons = document.getElementsByClassName(process.env.SHOWTIME_SUBMIT_PATH);
+                let enter = buttons[process.env.SHOWTIME_SUBMIT_INDEX];
                 enter.click();
             });
             await page.waitForNavigation();
         
-       
-            if (page.url() === 'https://www.showtime.com/#') {
-                res.send({ type: SERVICE, validation: true });
-            }
-            else {
-                res.send({ type: SERVICE, validation: false });
+            // Check if login succeeded
+            if (page.url() === process.env.SHOWTIME_SUCCESS_VALUE) { // TODO
+                res.send({ 
+                    type: req.query.service, 
+                    validation: true 
+                });
+            } else {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: false 
+                });
             }
         } catch (err) {
-            res.send({ type: SERVICE, error: err })
+            res.send({ 
+                type: req.query.service,
+                error: err 
+            });
         }
     }
 
+     // Close puppeteer.js browser
     await browser.close();
 });
 
 
+
+/* 
+    Start server
+*/
 app.listen(process.env.PORT || 5000, function(){
     console.log("Chrome server listening on port %d in %s mode", this.address().port, app.settings.env);
 });

@@ -1,13 +1,17 @@
 {
-  "name": "chrome",
+  "name": "StreamFox-Chrome Node",
   "version": "1.0.0",
-  "description": "",
+  "description": "Headless Chrome node for login credential testing and cookie retrieval",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jblewdv/StreamFox-HeadlessChromeNode"
+  },
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Joshua Blew",
+  "license": "Unlicensed",
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
