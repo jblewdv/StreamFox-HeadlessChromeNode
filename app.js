@@ -30,7 +30,7 @@ app.use(bodyParser.urlencoded({
     Cookie Retrieval for Login 
 */
 app.get('/getCookies', async function(req, res, next) {
-    request.get(process.env.FETCH_URL + "?type=" + req.query.service, async function(error, response, body) { 
+    request.get("https://streamfox-web.herokuapp.com/users/fetch?type=" + req.query.service, async function(error, response, body) { 
         
         // Fetch a service for the user
         var service = JSON.parse(body).service;
@@ -42,19 +42,19 @@ app.get('/getCookies', async function(req, res, next) {
         if (service.type === 'netflix') {        
             try {
                 // Navigate to Netflix login page and insert login credentials
-                await page.goto(process.env.NETFLIX_LOGIN_URI);
-                await page.type(process.env.NETFLIX_USERNAME_DIV, service.email);
-                await page.type(process.env.NETFLIX_PASSWORD_DIV, service.password);
+                await page.goto("https://www.netflix.com/login");
+                await page.type("#id_userLoginId", service.email);
+                await page.type("#id_password", service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH);
-                    let submit = buttons[process.env.NETFLIX_SUBMIT_INDEX];
+                    let buttons = document.getElementsByClassName("login-button");
+                    let submit = buttons[0];
                     submit.click();
                 });
                 await page.waitForNavigation();
                 
                 // Select a Netflix profile
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH_AUX);
+                    let buttons = document.getElementsByClassName("profile-icon");
                     let enter = buttons[0];  
                     enter.click();
                 });
@@ -77,12 +77,12 @@ app.get('/getCookies', async function(req, res, next) {
         if (service.type === 'hulu') {        
             try {
                 // Navigate to Hulu login page and insert login credentials
-                await page.goto(process.env.HULU_LOGIN_URI);
-                await page.type(process.env.HULU_USERNAME_DIV, service.email);
-                await page.type(process.env.HULU_PASSWORD_DIV, service.password);
+                await page.goto("https://www.hulu.com/login");
+                await page.type("#email_id", service.email);
+                await page.type("#password_id", service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName(process.env.HULU_SUBMIT_PATH);
-                    let enter = buttons[process.env.HULU_SUBMIT_INDEX];
+                    let buttons = document.getElementsByClassName("login-button");
+                    let enter = buttons[1];
                     enter.click();
                 });
                 await page.waitForNavigation();
@@ -105,13 +105,13 @@ app.get('/getCookies', async function(req, res, next) {
         if (service.type === 'cbs') {
             try {
                 // Navigate to CBS login page and insert login credentials
-                await page.goto(process.env.CBS_LOGIN_URI);
-                await page.waitForSelector(process.env.CBS_USERNAME_DIV);
-                await page.type(process.env.CBS_USERNAME_DIV, service.email);
-                await page.type(process.env.CBS_PASSWORD_DIV, service.password);
+                await page.goto(CBS_LOGIN_URI);
+                await page.waitForSelector(CBS_USERNAME_DIV);
+                await page.type(CBS_USERNAME_DIV, service.email);
+                await page.type(CBS_PASSWORD_DIV, service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName(process.env.CBS_SUBMIT_PATH);
-                    let enter = buttons[process.env.CBS_SUBMIT_INDEX];
+                    let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
+                    let enter = buttons[CBS_SUBMIT_INDEX];
                     enter.click();
                 });
                 await page.waitForNavigation();
@@ -134,13 +134,13 @@ app.get('/getCookies', async function(req, res, next) {
         if (service.type === 'showtime') {
             try {
                 // Navigate to Showtime login page and insert login credentials
-                await page.goto(process.env.SHOWTIME_LOGIN_URI);
-                await page.waitForSelector(process.env.SHOWTIME_USERNAME_DIV);
-                await page.type(process.env.SHOWTIME_USERNAME_DIV, service.email);
-                await page.type(process.env.SHOWTIME_PASSWORD_DIV, service.password);
+                await page.goto("https://www.showtime.com/#signin");
+                await page.waitForSelector("#email");
+                await page.type("#email", service.email);
+                await page.type("#password", service.password);
                 await page.evaluate(() => {
-                    let buttons = document.getElementsByClassName(process.env.SHOWTIME_SUBMIT_PATH);
-                    let enter = buttons[process.env.SHOWTIME_SUBMIT_INDEX];
+                    let buttons = document.getElementsByClassName("button");
+                    let enter = buttons[0];
                     enter.click();
                 });
                 await page.waitForNavigation();
@@ -178,25 +178,25 @@ app.get('/checkValid', async function(req, res, next) {
     if (req.query.service === 'netflix') {
         try {
             // Navigate to Netflix login page and insert login credentials
-            await page.goto(process.env.NETFLIX_LOGIN_URI);
-            await page.type(process.env.NETFLIX_EMAIL_DIV, req.query.email);
-            await page.type(process.env.NETFLIX_PASSWORD_DIV, req.query.password);
+            await page.goto("https://www.netflix.com/login");
+            await page.type("#id_userLoginId", req.query.email);
+            await page.type("#id_password", req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH);
-                let submit = buttons[process.env.NETFLIX_SUBMIT_INDEX];
+                let buttons = document.getElementsByClassName("login-button");
+                let submit = buttons[0];
                 submit.click();
             });
             await page.waitForNavigation();
 
             // Select a Netflix profile
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(process.env.NETFLIX_SUBMIT_PATH_AUX);
+                let buttons = document.getElementsByClassName("profile-icon");
                 let enter = buttons[0];  
                 enter.click();
             });
             
             // Check if login succeeded
-            if (page.url() === process.env.NETFLIX_SUCCESS_VALUE) { // TODO: update res.send data
+            if (page.url() === "https://www.netflix.com/browse") { // TODO: update res.send data
                 res.send({ 
                     type: req.query.service, 
                     validation: true 
@@ -218,18 +218,18 @@ app.get('/checkValid', async function(req, res, next) {
     if (req.query.service === 'hulu') {
         try {
             // Navigate to Hulu login page and insert login credentials
-            await page.goto(process.env.HULU_LOGIN_URI);
-            await page.type(process.env.HULU_USERNAME_DIV, req.query.email);
-            await page.type(process.env.HULU_PASSWORD_DIV, req.query.password);
+            await page.goto("https://www.hulu.com/login");
+            await page.type("#email_id", req.query.email);
+            await page.type("#password_id", req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(process.env.HULU_SUBMIT_PATH);
-                let enter = buttons[process.env.HULU_SUBMIT_INDEX];
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[1];
                 enter.click();
             });
             await page.waitForNavigation();
 
             // Check if login succeeded
-            if (page.url() === process.env.HULU_SUCCESS_VALUE) { // TODO
+            if (page.url() === "https://www.hulu.com/profiles?next=/") { // TODO
                 res.send({ 
                     type: req.query.service, 
                     validation: true 
@@ -252,19 +252,19 @@ app.get('/checkValid', async function(req, res, next) {
     if (req.query.service === 'cbs') {
         try {
             // Navigate to CBS login page and insert login credentials
-            await page.goto(process.env.CBS_LOGIN_URI);
-            await page.waitForSelector(process.env.CBS_USERNAME_DIV);
-            await page.type(process.env.CBS_USERNAME_DIV, req.query.email);
-            await page.type(process.env.CBS_PASSWORD_DIV, req.query.password);
+            await page.goto(CBS_LOGIN_URI);
+            await page.waitForSelector(CBS_USERNAME_DIV);
+            await page.type(CBS_USERNAME_DIV, req.query.email);
+            await page.type(CBS_PASSWORD_DIV, req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(process.env.CBS_SUBMIT_PATH);
-                let enter = buttons[process.env.CBS_SUBMIT_INDEX];
+                let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
+                let enter = buttons[CBS_SUBMIT_INDEX];
                 enter.click();
             });
             await page.waitForNavigation();
             
             // Check if login succeeded
-            if (page.url() === process.env.CBS_SUCCESS_VALUE) { // TODO
+            if (page.url() === CBS_SUCCESS_VALUE) { // TODO
                 res.send({ 
                     type: req.query.service, 
                     validation: true 
@@ -286,19 +286,19 @@ app.get('/checkValid', async function(req, res, next) {
     if (req.query.service === 'showtime') {
         try {
             // Navigate to Showtime login page and insert login credentials
-            await page.goto(process.env.SHOWTIME_LOGIN_URI);
-            await page.waitForSelector(process.env.SHOWTIME_USERNAME_DIV);
-            await page.type(process.env.SHOWTIME_USERNAME_DIV, req.query.email);
-            await page.type(process.env.SHOWTIME_PASSWORD_DIV, req.query.password);
+            await page.goto("https://www.showtime.com/#signin");
+            await page.waitForSelector("#email");
+            await page.type("#email", req.query.email);
+            await page.type("#password", req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(process.env.SHOWTIME_SUBMIT_PATH);
-                let enter = buttons[process.env.SHOWTIME_SUBMIT_INDEX];
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
                 enter.click();
             });
             await page.waitForNavigation();
         
             // Check if login succeeded
-            if (page.url() === process.env.SHOWTIME_SUCCESS_VALUE) { // TODO
+            if (page.url() === "https://www.showtime.com/#") { // TODO
                 res.send({ 
                     type: req.query.service, 
                     validation: true 
