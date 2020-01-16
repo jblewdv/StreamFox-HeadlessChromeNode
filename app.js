@@ -27,6 +27,14 @@ app.use(bodyParser.urlencoded({
 
 
 /*
+    Server status check
+*/
+router.get('/status', function(req, res, next) {
+    res.status(200);
+});
+
+
+/*
     Cookie Retrieval for Login 
 */
 app.get('/getCookies', async function(req, res, next) {
