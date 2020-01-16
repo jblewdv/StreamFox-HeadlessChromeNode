@@ -29,7 +29,7 @@ app.use(bodyParser.urlencoded({
 /*
     Server status check
 */
-router.get('/status', function(req, res, next) {
+app.get('/status', function(req, res, next) {
     res.status(200);
 });
 
