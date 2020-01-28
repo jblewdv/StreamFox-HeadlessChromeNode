@@ -168,6 +168,43 @@ app.get('/getCookies', async function(req, res, next) {
             }
         }
 
+        if (service.type === 'disney') {
+            try {
+                // Navigate to Disney login page and insert login credentials
+                await page.goto("https://www.disneyplus.com/login");
+                await page.type("#email", service.email);
+                
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                    let submit = buttons[0];
+                    submit.click();
+                });
+                await page.waitForNavigation();
+                
+                // Continue logging in
+                await page.type("#password", service.password);
+                await page.evaluate(() => {
+                    let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                    let enter = buttons[0];  
+                    enter.click();
+                });
+                await page.waitForNavigation();
+        
+                // Grab Disney cookies and return
+                var cookies = await page.cookies();
+                res.send({ 
+                    cookies: cookies,
+                    service: service 
+                });
+            } catch(err) {
+                res.send({ 
+                    cookies: null,
+                    service: service,
+                    error: err 
+                });
+            } 
+        }
+
         // Close puppeteer.js browser
         await browser.close();     
     });
@@ -256,23 +293,22 @@ app.get('/checkValid', async function(req, res, next) {
         }
     }
     
-    // ! needs validation url check !
     if (req.query.service === 'cbs') {
         try {
             // Navigate to CBS login page and insert login credentials
-            await page.goto(CBS_LOGIN_URI);
-            await page.waitForSelector(CBS_USERNAME_DIV);
-            await page.type(CBS_USERNAME_DIV, req.query.email);
-            await page.type(CBS_PASSWORD_DIV, req.query.password);
+            await page.goto("https://www.cbs.com/cbs-all-access/signin/	");
+            await page.waitForSelector(".qt-emailtxtfield");
+            await page.type(".qt-emailtxtfield", req.query.email);
+            await page.type(".qt-passwordtxtfield", req.query.password);
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
-                let enter = buttons[CBS_SUBMIT_INDEX];
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
                 enter.click();
             });
             await page.waitForNavigation();
             
             // Check if login succeeded
-            if (page.url() === CBS_SUCCESS_VALUE) { // TODO
+            if (page.url() === "https://www.cbs.com/") {
                 res.send({ 
                     type: req.query.service, 
                     validation: true 
@@ -323,6 +359,48 @@ app.get('/checkValid', async function(req, res, next) {
                 error: err 
             });
         }
+    }
+
+    if (req.query.service === 'disney') {
+        try {
+            // Navigate to Disney login page and insert login credentials
+            await page.goto("https://www.disneyplus.com/login");
+            await page.type("#email", service.email);
+            
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let submit = buttons[0];
+                submit.click();
+            });
+            await page.waitForNavigation();
+            
+            // Continue logging in
+            await page.type("#password", service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let enter = buttons[0];  
+                enter.click();
+            });
+            await page.waitForNavigation();
+    
+            // Check if login succeeded
+            if (page.url() === "https://www.disneyplus.com/	") {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: true 
+                });
+            } else {
+                res.send({ 
+                    type: req.query.service, 
+                    validation: false 
+                });
+            }
+        } catch(err) {
+            res.send({ 
+                type: req.query.service,
+                error: err 
+            });
+        } 
     }
 
      // Close puppeteer.js browser
