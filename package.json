@@ -15,6 +15,7 @@
   "dependencies": {
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
+    "firebase-admin": "^8.9.2",
     "puppeteer": "^2.0.0",
     "request": "^2.88.0"
   }
