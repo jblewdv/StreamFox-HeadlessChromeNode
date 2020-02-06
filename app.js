@@ -51,19 +51,185 @@ app.get('/status', function(req, res, next) {
     Cookie Retrieval for Login 
 */
 app.get('/getCookies', async function(req, res, next) {
+    let service;
+
     let servicesTable = db.collection('services');
     let query = servicesTable.where('service', '==', req.query.service).where('isAvailable', '==', true).limit(1).get().then(snapshot => {
-        if (snapshot.empty) res.send({ cookies: null, service: service });
+        if (snapshot.empty) res.send({ cookies: null });
         else {
             snapshot.forEach(doc => {
                 console.log(doc.id, '=>', doc.data());
-            });
-            res.send({ data: snapshot });
-          
+                service = doc.data();
+            }); 
         }
     }).catch(err => {
         console.log('Error getting services: ', err);
     });
+
+    // Setup puppeteer.js
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const page = await browser.newPage();
+
+    if (service.service === 'netflix') {        
+        try {
+            // Navigate to Netflix login page and insert login credentials
+            await page.goto("https://www.netflix.com/login");
+            await page.type("#id_userLoginId", service.username);
+            await page.type("#id_password", service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("login-button");
+                let submit = buttons[0];
+                submit.click();
+            });
+            await page.waitForNavigation();
+            
+            // Select a Netflix profile
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("profile-icon");
+                let enter = buttons[0];  
+                enter.click();
+            });
+    
+            // Grab Netflix cookies and return
+            var cookies = await page.cookies();
+            res.send({ 
+                cookies: cookies,
+                service: service 
+            });
+        } catch(err) {
+            res.send({ 
+                cookies: null,
+                service: service,
+                error: err 
+            });
+        } 
+    }
+
+    if (service.service === 'hulu') {        
+        try {
+            // Navigate to Hulu login page and insert login credentials
+            await page.goto("https://www.hulu.com/login");
+            await page.type("#email_id", service.username);
+            await page.type("#password_id", service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[1];
+                enter.click();
+            });
+            await page.waitForNavigation();
+            
+            // Grab Netflix cookies and return
+            var cookies = await page.cookies();
+            res.send({ 
+                cookies: cookies,
+                service: service 
+            });
+        } catch (err) {
+            res.send({ 
+                cookies: null,
+                service: service,
+                error: err
+            });
+        }
+    }
+
+    if (service.service === 'cbs') {
+        try {
+            // Navigate to CBS login page and insert login credentials
+            await page.goto(CBS_LOGIN_URI);
+            await page.waitForSelector(CBS_USERNAME_DIV);
+            await page.type(CBS_USERNAME_DIV, service.username);
+            await page.type(CBS_PASSWORD_DIV, service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
+                let enter = buttons[CBS_SUBMIT_INDEX];
+                enter.click();
+            });
+            await page.waitForNavigation();
+            
+            // Grab CBS cookies and return
+            var cookies = await page.cookies();
+            res.send({ 
+                cookies: cookies,
+                service: service 
+            });
+        } catch (err) {
+            res.send({ 
+                cookies: null,
+                service: service,
+                error: err
+            });
+        } 
+    }
+
+    if (service.service === 'showtime') {
+        try {
+            // Navigate to Showtime login page and insert login credentials
+            await page.goto("https://www.showtime.com/#signin");
+            await page.waitForSelector("#email");
+            await page.type("#email", service.username);
+            await page.type("#password", service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        
+            // Grab Showtime cookies and return
+            var cookies = await page.cookies();
+            res.send({ 
+                cookies: cookies,
+                service: service 
+            });
+        } catch (err) {
+            res.send({ 
+                cookies: null,
+                service: service,
+                error: err
+            });
+        }
+    }
+
+    if (service.service === 'disney') {
+        try {
+            // Navigate to Disney login page and insert login credentials
+            await page.goto("https://www.disneyplus.com/login");
+            await page.type("#email", service.username);
+            
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let submit = buttons[0];
+                submit.click();
+            });
+            await page.waitForNavigation();
+            
+            // Continue logging in
+            await page.type("#password", service.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let enter = buttons[0];  
+                enter.click();
+            });
+            await page.waitForNavigation();
+    
+            // Grab Disney cookies and return
+            var cookies = await page.cookies();
+            res.send({ 
+                cookies: cookies,
+                service: service 
+            });
+        } catch(err) {
+            res.send({ 
+                cookies: null,
+                service: service,
+                error: err 
+            });
+        } 
+    }
+
+    // Close puppeteer.js browser
+    await browser.close();
 
 
 
@@ -75,170 +241,170 @@ app.get('/getCookies', async function(req, res, next) {
     //     // Fetch a service for the user
     //     var service = JSON.parse(body).service;
 
-    //     // Setup puppeteer.js
-    //     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    //     const page = await browser.newPage();
+        // // Setup puppeteer.js
+        // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+        // const page = await browser.newPage();
 
-    //     if (service.type === 'netflix') {        
-    //         try {
-    //             // Navigate to Netflix login page and insert login credentials
-    //             await page.goto("https://www.netflix.com/login");
-    //             await page.type("#id_userLoginId", service.email);
-    //             await page.type("#id_password", service.password);
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("login-button");
-    //                 let submit = buttons[0];
-    //                 submit.click();
-    //             });
-    //             await page.waitForNavigation();
+        // if (service.type === 'netflix') {        
+        //     try {
+        //         // Navigate to Netflix login page and insert login credentials
+        //         await page.goto("https://www.netflix.com/login");
+        //         await page.type("#id_userLoginId", service.email);
+        //         await page.type("#id_password", service.password);
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("login-button");
+        //             let submit = buttons[0];
+        //             submit.click();
+        //         });
+        //         await page.waitForNavigation();
                 
-    //             // Select a Netflix profile
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("profile-icon");
-    //                 let enter = buttons[0];  
-    //                 enter.click();
-    //             });
+        //         // Select a Netflix profile
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("profile-icon");
+        //             let enter = buttons[0];  
+        //             enter.click();
+        //         });
         
-    //             // Grab Netflix cookies and return
-    //             var cookies = await page.cookies();
-    //             res.send({ 
-    //                 cookies: cookies,
-    //                 service: service 
-    //             });
-    //         } catch(err) {
-    //             res.send({ 
-    //                 cookies: null,
-    //                 service: service,
-    //                 error: err 
-    //             });
-    //         } 
-    //     }
+        //         // Grab Netflix cookies and return
+        //         var cookies = await page.cookies();
+        //         res.send({ 
+        //             cookies: cookies,
+        //             service: service 
+        //         });
+        //     } catch(err) {
+        //         res.send({ 
+        //             cookies: null,
+        //             service: service,
+        //             error: err 
+        //         });
+        //     } 
+        // }
 
-    //     if (service.type === 'hulu') {        
-    //         try {
-    //             // Navigate to Hulu login page and insert login credentials
-    //             await page.goto("https://www.hulu.com/login");
-    //             await page.type("#email_id", service.email);
-    //             await page.type("#password_id", service.password);
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("login-button");
-    //                 let enter = buttons[1];
-    //                 enter.click();
-    //             });
-    //             await page.waitForNavigation();
+        // if (service.type === 'hulu') {        
+        //     try {
+        //         // Navigate to Hulu login page and insert login credentials
+        //         await page.goto("https://www.hulu.com/login");
+        //         await page.type("#email_id", service.email);
+        //         await page.type("#password_id", service.password);
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("login-button");
+        //             let enter = buttons[1];
+        //             enter.click();
+        //         });
+        //         await page.waitForNavigation();
                 
-    //             // Grab Netflix cookies and return
-    //             var cookies = await page.cookies();
-    //             res.send({ 
-    //                 cookies: cookies,
-    //                 service: service 
-    //             });
-    //         } catch (err) {
-    //             res.send({ 
-    //                 cookies: null,
-    //                 service: service,
-    //                 error: err
-    //             });
-    //         }
-    //     }
+        //         // Grab Netflix cookies and return
+        //         var cookies = await page.cookies();
+        //         res.send({ 
+        //             cookies: cookies,
+        //             service: service 
+        //         });
+        //     } catch (err) {
+        //         res.send({ 
+        //             cookies: null,
+        //             service: service,
+        //             error: err
+        //         });
+        //     }
+        // }
     
-    //     if (service.type === 'cbs') {
-    //         try {
-    //             // Navigate to CBS login page and insert login credentials
-    //             await page.goto(CBS_LOGIN_URI);
-    //             await page.waitForSelector(CBS_USERNAME_DIV);
-    //             await page.type(CBS_USERNAME_DIV, service.email);
-    //             await page.type(CBS_PASSWORD_DIV, service.password);
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
-    //                 let enter = buttons[CBS_SUBMIT_INDEX];
-    //                 enter.click();
-    //             });
-    //             await page.waitForNavigation();
+        // if (service.type === 'cbs') {
+        //     try {
+        //         // Navigate to CBS login page and insert login credentials
+        //         await page.goto(CBS_LOGIN_URI);
+        //         await page.waitForSelector(CBS_USERNAME_DIV);
+        //         await page.type(CBS_USERNAME_DIV, service.email);
+        //         await page.type(CBS_PASSWORD_DIV, service.password);
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName(CBS_SUBMIT_PATH);
+        //             let enter = buttons[CBS_SUBMIT_INDEX];
+        //             enter.click();
+        //         });
+        //         await page.waitForNavigation();
                 
-    //             // Grab CBS cookies and return
-    //             var cookies = await page.cookies();
-    //             res.send({ 
-    //                 cookies: cookies,
-    //                 service: service 
-    //             });
-    //         } catch (err) {
-    //             res.send({ 
-    //                 cookies: null,
-    //                 service: service,
-    //                 error: err
-    //             });
-    //         } 
-    //     }
+        //         // Grab CBS cookies and return
+        //         var cookies = await page.cookies();
+        //         res.send({ 
+        //             cookies: cookies,
+        //             service: service 
+        //         });
+        //     } catch (err) {
+        //         res.send({ 
+        //             cookies: null,
+        //             service: service,
+        //             error: err
+        //         });
+        //     } 
+        // }
 
-    //     if (service.type === 'showtime') {
-    //         try {
-    //             // Navigate to Showtime login page and insert login credentials
-    //             await page.goto("https://www.showtime.com/#signin");
-    //             await page.waitForSelector("#email");
-    //             await page.type("#email", service.email);
-    //             await page.type("#password", service.password);
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("button");
-    //                 let enter = buttons[0];
-    //                 enter.click();
-    //             });
-    //             await page.waitForNavigation();
+        // if (service.type === 'showtime') {
+        //     try {
+        //         // Navigate to Showtime login page and insert login credentials
+        //         await page.goto("https://www.showtime.com/#signin");
+        //         await page.waitForSelector("#email");
+        //         await page.type("#email", service.email);
+        //         await page.type("#password", service.password);
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("button");
+        //             let enter = buttons[0];
+        //             enter.click();
+        //         });
+        //         await page.waitForNavigation();
             
-    //             // Grab Showtime cookies and return
-    //             var cookies = await page.cookies();
-    //             res.send({ 
-    //                 cookies: cookies,
-    //                 service: service 
-    //             });
-    //         } catch (err) {
-    //             res.send({ 
-    //                 cookies: null,
-    //                 service: service,
-    //                 error: err
-    //             });
-    //         }
-    //     }
+        //         // Grab Showtime cookies and return
+        //         var cookies = await page.cookies();
+        //         res.send({ 
+        //             cookies: cookies,
+        //             service: service 
+        //         });
+        //     } catch (err) {
+        //         res.send({ 
+        //             cookies: null,
+        //             service: service,
+        //             error: err
+        //         });
+        //     }
+        // }
 
-    //     if (service.type === 'disney') {
-    //         try {
-    //             // Navigate to Disney login page and insert login credentials
-    //             await page.goto("https://www.disneyplus.com/login");
-    //             await page.type("#email", service.email);
+        // if (service.type === 'disney') {
+        //     try {
+        //         // Navigate to Disney login page and insert login credentials
+        //         await page.goto("https://www.disneyplus.com/login");
+        //         await page.type("#email", service.email);
                 
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
-    //                 let submit = buttons[0];
-    //                 submit.click();
-    //             });
-    //             await page.waitForNavigation();
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+        //             let submit = buttons[0];
+        //             submit.click();
+        //         });
+        //         await page.waitForNavigation();
                 
-    //             // Continue logging in
-    //             await page.type("#password", service.password);
-    //             await page.evaluate(() => {
-    //                 let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
-    //                 let enter = buttons[0];  
-    //                 enter.click();
-    //             });
-    //             await page.waitForNavigation();
+        //         // Continue logging in
+        //         await page.type("#password", service.password);
+        //         await page.evaluate(() => {
+        //             let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+        //             let enter = buttons[0];  
+        //             enter.click();
+        //         });
+        //         await page.waitForNavigation();
         
-    //             // Grab Disney cookies and return
-    //             var cookies = await page.cookies();
-    //             res.send({ 
-    //                 cookies: cookies,
-    //                 service: service 
-    //             });
-    //         } catch(err) {
-    //             res.send({ 
-    //                 cookies: null,
-    //                 service: service,
-    //                 error: err 
-    //             });
-    //         } 
-    //     }
+        //         // Grab Disney cookies and return
+        //         var cookies = await page.cookies();
+        //         res.send({ 
+        //             cookies: cookies,
+        //             service: service 
+        //         });
+        //     } catch(err) {
+        //         res.send({ 
+        //             cookies: null,
+        //             service: service,
+        //             error: err 
+        //         });
+        //     } 
+        // }
 
-    //     // Close puppeteer.js browser
-    //     await browser.close();     
+        // // Close puppeteer.js browser
+        // await browser.close();     
     // });
 });
 
