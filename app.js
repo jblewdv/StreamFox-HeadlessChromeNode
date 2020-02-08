@@ -51,25 +51,25 @@ app.get('/status', function(req, res, next) {
     Cookie Retrieval for Login 
 */
 app.get('/getCookies', async function(req, res, next) {
-    let service;
 
-    let servicesTable = db.collection('services');
-    let query = servicesTable.where('service', '==', req.query.service).where('isAvailable', '==', true).limit(1).get().then(snapshot => {
-        if (snapshot.empty) res.send({ cookies: null });
-        else {
-            snapshot.forEach(doc => {
-                console.log(doc.id, '=>', doc.data());
-                service = doc.data();
-            }); 
-        }
-    }).catch(err => {
-        console.log('Error getting services: ', err);
-    });
+    let collection = db.collection('services');
+    let query = collection
+        .where('service', '==', req.query.service)
+        .where('isAvailable', '==', true)
+        .limit(1)
+    
+    let snapshot = await query.get();
+
+    let service = snapshot.docs.map(doc => ({__id: doc.id, ...doc.data()}));
+    service = service[0];
+
 
     // Setup puppeteer.js
     const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    // const browser = await puppeteer.launch({});
     const page = await browser.newPage();
 
+    // TODO: cannot read .service of undefined (TEST LOCALLY!)
     if (service.service === 'netflix') {        
         try {
             // Navigate to Netflix login page and insert login credentials
