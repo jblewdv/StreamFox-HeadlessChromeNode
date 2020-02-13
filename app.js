@@ -67,8 +67,7 @@ app.get('/getCookies', async function(req, res, next) {
     var service = snapshot.docs.map(doc => ({__id: doc.id, ...doc.data()}))[0];
 
     // Setup puppeteer.js
-    // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     try {
@@ -177,8 +176,7 @@ app.get('/isValid', async function(req, res, next) {
     var type = req.query.type
     
     // Setup puppeteer.js
-    // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
-    const browser = await puppeteer.launch({headless: false});
+    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
     const page = await browser.newPage();
 
     try {
@@ -282,7 +280,12 @@ app.get('/isValid', async function(req, res, next) {
  * Starts Chrome server 
  * 
 */
-app.listen(process.env.PORT || 5000, function(){
+const PORT = 8080;
+const HOST = '0.0.0.0';
+
+// app.listen(process.env.PORT || 5000, function(){
+app.listen(PORT, function(){
+
     initFirestore();
     console.log("Chrome server listening on port %d in %s mode", this.address().port, app.settings.env);
 });
