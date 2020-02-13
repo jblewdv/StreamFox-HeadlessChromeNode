@@ -2,57 +2,21 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const bodyParser = require('body-parser');
 const admin = require("firebase-admin");
+const yaml = require('js-yaml');
+const fs   = require('fs');
 const serviceAccount = require("./streamfox-main-firebase.json");
 
-// require('dotenv/config');
-require('dotenv').config()
+var config;
+let db;
+
+try {
+    config = yaml.safeLoad(fs.readFileSync('service-config.yaml', 'utf8'));
+} catch (e) {
+    console.log(e);
+}
 
 const app = express();
-console.log(process.env.myList[1])
-
 app.use(bodyParser.urlencoded({ extended: true }));
-
-// Environment variables
-let serviceTypes = ['netflix', 'hulu', 'cbs', 'showtime', 'disney']
-let LOGIN_URLS = [          process.env.NETFLIX_LOGIN_URL, 
-                            process.env.HULU_LOGIN_URL,
-                            process.env.CBS_LOGIN_URL, 
-                            process.env.SHOWTIME_LOGIN_URL, 
-                            process.env.DISNEY_LOGIN_URL]
-
-let USERNAME_DIVS = [       process.env.NETFLIX_USERNAME_DIV, 
-                            process.env.HULU_USERNAME_DIV,
-                            process.env.CBS_USERNAME_DIV, 
-                            process.env.SHOWTIME_USERNAME_DIV, 
-                            process.env.DISNEY_USERNAME_DIV]
-
-let PASSWORD_DIVS = [       process.env.NETFLIX_PASSWORD_DIV, 
-                            process.env.HULU_PASSWORD_DIV,
-                            process.env.CBS_PASSWORD_DIV, 
-                            process.env.SHOWTIME_PASSWORD_DIV, 
-                            process.env.DISNEY_PASSWORD_DIV]
-
-let SUBMIT_PATHS = [        process.env.NETFLIX_SUBMIT_PATH, 
-                            process.env.HULU_SUBMIT_PATH,
-                            process.env.CBS_SUBMIT_PATH, 
-                            process.env.SHOWTIME_SUBMIT_PATH, 
-                            process.env.DISNEY_SUBMIT_PATH]
-
-let SUBMIT_PATH_AUXS = [    process.env.NETFLIX_SUBMIT_PATH_AUX, 0, 0, 0, 0]
-
-let SUBMIT_PATH_INDEXES = [ process.env.NETFLIX_SUBMIT_INDEX, 
-                            process.env.HULU_SUBMIT_INDEX,
-                            process.env.CBS_SUBMIT_INDEX, 
-                            process.env.SHOWTIME_SUBMIT_INDEX, 
-                            process.env.DISNEY_SUBMIT_INDEX]
-
-let SUCCESS_VALUES = [      process.env.NETFLIX_SUCCESS_VALUE, 
-                            process.env.HULU_SUCCESS_VALUE,
-                            process.env.CBS_SUCCESS_VALUE, 
-                            process.env.SHOWTIME_SUCCESS_VALUE, 
-                            process.env.DISNEY_SUCCESS_VALUE]
-
-
 
 /**
  * 
@@ -61,7 +25,6 @@ let SUCCESS_VALUES = [      process.env.NETFLIX_SUCCESS_VALUE,
 */
 async function initFirestore() {
     console.log('Initializing Firestore...')
-    let db;
     let success = false
     while (!success) {
         try {
@@ -92,69 +55,103 @@ async function initFirestore() {
 */
 app.get('/getCookies', async function(req, res, next) {
 
+    var type = req.query.type
+
     var serviceCollection = db.collection('services');
     var query = serviceCollection
-        .where('type', '==', req.query.type)
+        .where('type', '==', type)
         .where('isAvailable', '==', true)
         .limit(1)
 
     var snapshot = await query.get();
     var service = snapshot.docs.map(doc => ({__id: doc.id, ...doc.data()}))[0];
-    var serviceIndex = serviceTypes.indexOf(req.query.type)
 
     // Setup puppeteer.js
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
 
     try {
         // Navigate to login page
-        await page.goto(LOGIN_URLS[serviceIndex]);
-        await page.waitForSelector(USERNAME_DIVS[serviceIndex]);
+        await page.goto(config[type].loginUrl);
+        await page.waitForSelector(config[type].usernameField);
         
         // Insert useranme and password
-        await page.type(USERNAME_DIVS[serviceIndex], service.username);
-        await page.type(PASSWORD_DIVS[serviceIndex], service.password);
+        await page.type(config[type].usernameField, service.username);
+        await page.type(config[type].passwordField, service.password);
+
+        if (type === 'netflix') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("profile-icon");
+                let enter = buttons[0];  
+                enter.click();
+            });
+            // await page.waitForNavigation();
+        }
+
+        // TODO: broken
+        else if (type === 'hulu') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[1];
+                enter.click();
+            });
+            // await page.waitForNavigation();
+        }
+
+        else if (type === 'cbs') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        }
+
+        else if (type === 'showtime') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        }
+
+        else if (type === 'disney') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+
+            await page.type("#password", req.query.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let enter = buttons[0];  
+                enter.click();
+            });
+        }
         
-        // Submit login form
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName(SUBMIT_PATHS[serviceIndex]);
-            let enter = buttons[SUBMIT_PATH_INDEXES[serviceIndex]];
-            enter.click();
-        });
-        await page.waitForNavigation();
-
-        // Individual service navigations
-        if (service.service === 'netflix') {
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(SUBMIT_PATH_AUXS[serviceIndex]);
-                let enter = buttons[0];  
-                enter.click();
-            });
-            await page.waitForNavigation();
-        }
-
-        else if (service.service === 'disney') {
-            await page.type(PASSWORD_DIVS[serviceIndex], service.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(SUBMIT_PATHS[serviceIndex]);
-                let enter = buttons[0];  
-                enter.click();
-            });
-            await page.waitForNavigation();
-        }
-
         // Get session cookies and return
         var cookies = await page.cookies();
 
         res.send({ 
-            type: req.query.type,
+            type: type,
             service: service,
             cookies: cookies,
         });
     }   
     catch(err) {
         res.send({ 
-            type: req.query.type,
+            type: type,
             service: service,
             cookies: null,
             error: err 
@@ -177,66 +174,100 @@ app.get('/getCookies', async function(req, res, next) {
 */
 app.get('/isValid', async function(req, res, next) {
 
-    var serviceIndex = serviceTypes.indexOf(req.query.type)
-
+    var type = req.query.type
+    
     // Setup puppeteer.js
-    const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    // const browser = await puppeteer.launch({ args: ['--no-sandbox'] });
+    const browser = await puppeteer.launch({headless: false});
     const page = await browser.newPage();
 
     try {
         // Navigate to login page
-        await page.goto(LOGIN_URLS[serviceIndex]);
-        await page.waitForSelector(USERNAME_DIVS[serviceIndex]);
+        await page.goto(config[type].loginUrl);
+        await page.waitForSelector(config[type].passwordField);
         
         // Insert useranme and password
-        await page.type(USERNAME_DIVS[serviceIndex], req.query.email);
-        await page.type(PASSWORD_DIVS[serviceIndex], req.query.password);
-
-        // Submit login form
-        await page.evaluate(() => {
-            let buttons = document.getElementsByClassName(SUBMIT_PATHS[serviceIndex]);
-            let enter = buttons[SUBMIT_PATH_INDEXES[serviceIndex]];
-            enter.click();
-        });
-        await page.waitForNavigation();
-
-        // Individual service navigations
-        if (req.query.type === 'netflix') {
+        await page.type(config[type].usernameField, req.query.email);
+        await page.type(config[type].passwordField, req.query.password);
+        
+        if (type === 'netflix') {
             await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(SUBMIT_PATH_AUXS[serviceIndex]);
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("profile-icon");
+                let enter = buttons[0];  
+                enter.click();
+            });
+            // await page.waitForNavigation();
+        }
+
+        // TODO: broken
+        else if (type === 'hulu') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("login-button");
+                let enter = buttons[1];
+                enter.click();
+            });
+            // await page.waitForNavigation();
+        }
+
+        else if (type === 'cbs') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        }
+
+        else if (type === 'showtime') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("button");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+        }
+
+        else if (type === 'disney') {
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
+                let enter = buttons[0];
+                enter.click();
+            });
+            await page.waitForNavigation();
+
+            await page.type("#password", req.query.password);
+            await page.evaluate(() => {
+                let buttons = document.getElementsByClassName("sc-iRbamj dfsHAW");
                 let enter = buttons[0];  
                 enter.click();
             });
             await page.waitForNavigation();
         }
 
-        else if (req.query.type === 'disney') {
-            await page.type(PASSWORD_DIVS[serviceIndex], req.query.password);
-            await page.evaluate(() => {
-                let buttons = document.getElementsByClassName(SUBMIT_PATHS[serviceIndex]);
-                let enter = buttons[0];  
-                enter.click();
-            });
-            await page.waitForNavigation();
-        }
-
-        // Confirm if login was successful and return
-        if (page.url() === SUCCESS_VALUES[serviceIndex]) {
+        // Check success
+        if (page.url() === config[type].successValue) {
             res.send({ 
-                type: req.query.type, 
+                type: type, 
                 isValid: true
             });
         } 
         else {
             res.send({ 
-                type: req.query.type, 
+                type: type, 
                 isValid: false 
             });
         }
     }   
     catch (err) {
         res.send({ 
-            type: req.query.type, 
+            type: type, 
             isValid: null,
             error: err 
         });

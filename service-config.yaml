@@ -1,0 +1,42 @@
+
+  netflix:
+    loginUrl: "https://www.netflix.com/login"
+    usernameField: "#id_userLoginId"
+    passwordField: "#id_password"
+    submitButton: "login-button"
+    submitButtonAuxilary: "profile-icon"
+    submitButtonIndex: 0
+    successValue: "https://www.netflix.com/browse"
+
+  hulu:
+    loginUrl: "https://www.hulu.com/login"
+    usernameField: "#email_id"
+    passwordField: "#password_id"
+    submitButton: "login-button"
+    submitButtonIndex: 1
+    successValue: "https://www.hulu.com/profiles?next=/"
+    # successValue: "https://www.hulu.com/login"
+  
+  cbs:
+    loginUrl: "https://www.cbs.com/cbs-all-access/signin/"
+    usernameField: ".qt-emailtxtfield"
+    passwordField: ".qt-passwordtxtfield"
+    submitButton: "button"
+    submitButtonIndex: 0
+    successValue: "https://www.cbs.com/"
+ 
+  showtime:
+    loginUrl: "https://www.showtime.com/#signin"
+    usernameField: "#email"
+    passwordField: "#password"
+    submitButton: "button"
+    submitButtonIndex: 0 
+    successValue: "https://www.showtime.com/#"
+ 
+  disney:
+    loginUrl: "https://www.disneyplus.com/login"
+    usernameField: "#email"
+    passwordField: "#password"
+    submitButton: "sc-iRbamj dfsHAW"
+    submitButtonIndex: 0
+    successValue: "https://www.disneyplus.com/"
